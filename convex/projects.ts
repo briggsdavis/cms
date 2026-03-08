@@ -1,5 +1,5 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { v } from "convex/values"
+import { mutation, query } from "./_generated/server"
 
 export const getBySlug = query({
   args: { slug: v.string() },
@@ -7,16 +7,16 @@ export const getBySlug = query({
     return ctx.db
       .query("projects")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
-      .first();
+      .first()
   },
-});
+})
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return ctx.db.query("projects").order("desc").collect();
+    return ctx.db.query("projects").order("desc").collect()
   },
-});
+})
 
 export const create = mutation({
   args: {
@@ -27,8 +27,8 @@ export const create = mutation({
     const existing = await ctx.db
       .query("projects")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
-      .first();
-    if (existing) throw new Error(`Slug "${slug}" is already taken`);
-    return ctx.db.insert("projects", { name, slug });
+      .first()
+    if (existing) throw new Error(`Slug "${slug}" is already taken`)
+    return ctx.db.insert("projects", { name, slug })
   },
-});
+})

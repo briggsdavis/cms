@@ -1,7 +1,5 @@
 {
   "name": "briggs-davis-cms",
-  "private": true,
-  "sideEffects": false,
   "type": "module",
   "scripts": {
     "dev": "npx convex dev --once && concurrently -r npm:dev:web npm:dev:convex",
@@ -10,8 +8,8 @@
     "dev:convex": "npx convex dev",
     "build": "vite build && tsc --noEmit",
     "start": "node .output/server/index.mjs",
-    "format": "prettier --write .",
-    "lint": "tsc && eslint .  --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "oxlint",
+    "format": "oxfmt"
   },
   "dependencies": {
     "@convex-dev/react-query": "0.1.0",
@@ -26,15 +24,14 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@convex-dev/eslint-plugin": "1.1.1",
     "@netlify/vite-plugin-tanstack-start": "1.2.18",
     "@tailwindcss/vite": "4.2.1",
-    "@tanstack/eslint-config": "0.4.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.1.4",
     "concurrently": "9.2.1",
-    "prettier": "3.8.1",
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.51.0",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vite": "7.3.1",

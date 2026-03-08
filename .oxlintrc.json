@@ -1,0 +1,5 @@
+{
+  "plugins": ["typescript", "react"],
+  "env": { "browser": true, "node": true },
+  "ignorePatterns": ["convex/_generated/**", "routeTree.gen.ts"]
+}

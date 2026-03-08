@@ -1,5 +1,5 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { v } from "convex/values"
+import { mutation, query } from "./_generated/server"
 
 export const listByProject = query({
   args: { projectId: v.id("projects") },
@@ -8,16 +8,16 @@ export const listByProject = query({
       .query("tasks")
       .withIndex("by_project", (q) => q.eq("projectId", projectId))
       .order("desc")
-      .collect();
+      .collect()
   },
-});
+})
 
 export const remove = mutation({
   args: { id: v.id("tasks") },
   handler: async (ctx, { id }) => {
-    await ctx.db.delete(id);
+    await ctx.db.delete(id)
   },
-});
+})
 
 export const create = mutation({
   args: {
@@ -26,6 +26,6 @@ export const create = mutation({
     task: v.string(),
   },
   handler: async (ctx, args) => {
-    return ctx.db.insert("tasks", args);
+    return ctx.db.insert("tasks", args)
   },
-});
+})

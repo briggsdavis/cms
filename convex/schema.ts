@@ -1,5 +1,5 @@
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema, defineTable } from "convex/server"
+import { v } from "convex/values"
 
 export default defineSchema({
   projects: defineTable({
@@ -11,4 +11,4 @@ export default defineSchema({
     assignee: v.union(v.literal("Max"), v.literal("Nate")),
     task: v.string(),
   }).index("by_project", ["projectId"]),
-});
+})

@@ -1,24 +1,33 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useMutation } from 'convex/react'
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { convexQuery } from '@convex-dev/react-query'
-import { api } from '../../convex/_generated/api'
-import { useState } from 'react'
-import slugify from '@sindresorhus/slugify'
-import { ChevronDown, ChevronRight } from 'lucide-react'
-import type { Id } from '../../convex/_generated/dataModel'
+import { createFileRoute, Link } from "@tanstack/react-router"
+import { useMutation } from "convex/react"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { convexQuery } from "@convex-dev/react-query"
+import { api } from "../../convex/_generated/api"
+import { useState } from "react"
+import slugify from "@sindresorhus/slugify"
+import { ChevronDown, ChevronRight } from "lucide-react"
+import type { Id } from "../../convex/_generated/dataModel"
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: Home,
 })
 
-function ProjectRow({ project }: { project: { _id: Id<'projects'>; name: string; slug: string } }) {
+function ProjectRow({
+  project,
+}: {
+  project: { _id: Id<"projects">; name: string; slug: string }
+}) {
   const [open, setOpen] = useState(false)
-  const { data: tasks } = useSuspenseQuery(convexQuery(api.tasks.listByProject, { projectId: project._id }))
+  const { data: tasks } = useSuspenseQuery(
+    convexQuery(api.tasks.listByProject, { projectId: project._id }),
+  )
 
   return (
     <li className="border rounded text-sm">
-      <button onClick={() => setOpen((o) => !o)} className="flex items-center justify-between w-full px-3 py-2 text-left">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center justify-between w-full px-3 py-2 text-left"
+      >
         <Link
           to="/$slug"
           params={{ slug: project.slug }}
@@ -46,17 +55,19 @@ function ProjectRow({ project }: { project: { _id: Id<'projects'>; name: string;
 }
 
 function Home() {
-  const { data: projects } = useSuspenseQuery(convexQuery(api.projects.list, {}))
+  const { data: projects } = useSuspenseQuery(
+    convexQuery(api.projects.list, {}),
+  )
   const create = useMutation(api.projects.create)
-  const [name, setName] = useState('')
-  const [error, setError] = useState('')
+  const [name, setName] = useState("")
+  const [error, setError] = useState("")
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
+    setError("")
     try {
       await create({ name, slug: slugify(name) })
-      setName('')
+      setName("")
     } catch (err: any) {
       setError(err.message)
     }
