@@ -12,6 +12,13 @@ export const listByProject = query({
   },
 });
 
+export const remove = mutation({
+  args: { id: v.id("tasks") },
+  handler: async (ctx, { id }) => {
+    await ctx.db.delete(id);
+  },
+});
+
 export const create = mutation({
   args: {
     projectId: v.id("projects"),

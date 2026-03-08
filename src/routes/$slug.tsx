@@ -16,6 +16,7 @@ function ProjectPage() {
     convexQuery(api.tasks.listByProject, project ? { projectId: project._id } : 'skip' as any)
   )
   const createTask = useMutation(api.tasks.create)
+  const removeTask = useMutation(api.tasks.remove)
   const [assignee, setAssignee] = useState<'Max' | 'Nate'>('Nate')
   const [task, setTask] = useState('')
 
@@ -58,9 +59,15 @@ function ProjectPage() {
 
       <ul className="flex flex-col gap-2">
         {tasks?.map((t) => (
-          <li key={t._id} className="flex items-center justify-between border rounded px-3 py-2 text-sm">
-            <span>{t.task}</span>
-            <span className="text-gray-400">{t.assignee}</span>
+          <li key={t._id} className="flex items-center gap-3 border rounded px-3 py-2 text-sm">
+            <span className="text-gray-400 shrink-0">{t.assignee}</span>
+            <span className="flex-1">{t.task}</span>
+            <button
+              onClick={() => removeTask({ id: t._id })}
+              className="text-gray-300 hover:text-red-500"
+            >
+              ✕
+            </button>
           </li>
         ))}
       </ul>

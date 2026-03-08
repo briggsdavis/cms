@@ -5,10 +5,45 @@ import { convexQuery } from '@convex-dev/react-query'
 import { api } from '../../convex/_generated/api'
 import { useState } from 'react'
 import slugify from '@sindresorhus/slugify'
+import { ChevronDown, ChevronRight } from 'lucide-react'
+import type { Id } from '../../convex/_generated/dataModel'
 
 export const Route = createFileRoute('/')({
   component: Home,
 })
+
+function ProjectRow({ project }: { project: { _id: Id<'projects'>; name: string; slug: string } }) {
+  const [open, setOpen] = useState(false)
+  const { data: tasks } = useSuspenseQuery(convexQuery(api.tasks.listByProject, { projectId: project._id }))
+
+  return (
+    <li className="border rounded text-sm">
+      <button onClick={() => setOpen((o) => !o)} className="flex items-center justify-between w-full px-3 py-2 text-left">
+        <Link
+          to="/$slug"
+          params={{ slug: project.slug }}
+          className="hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {project.name}
+        </Link>
+        <span className="text-gray-400">
+          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        </span>
+      </button>
+      {open && tasks.length > 0 && (
+        <ul className="border-t px-3 py-2 flex flex-col gap-1">
+          {tasks.map((t) => (
+            <li key={t._id} className="flex gap-3 text-gray-600">
+              <span className="text-gray-400 shrink-0">{t.assignee}</span>
+              <span>{t.task}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+}
 
 function Home() {
   const { data: projects } = useSuspenseQuery(convexQuery(api.projects.list, {}))
@@ -50,16 +85,7 @@ function Home() {
 
       <ul className="flex flex-col gap-2">
         {projects.map((p) => (
-          <li key={p._id}>
-            <Link
-              to="/$slug"
-              params={{ slug: p.slug }}
-              className="flex items-center justify-between border rounded px-3 py-2 text-sm hover:bg-gray-100"
-            >
-              <span>{p.name}</span>
-              <span className="text-gray-400">{p.slug}</span>
-            </Link>
-          </li>
+          <ProjectRow key={p._id} project={p} />
         ))}
       </ul>
     </main>
