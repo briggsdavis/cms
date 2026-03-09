@@ -18,6 +18,18 @@ export const list = query({
   },
 })
 
+export const remove = mutation({
+  args: { id: v.id("projects") },
+  handler: async (ctx, { id }) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_project", (q) => q.eq("projectId", id))
+      .collect()
+    await Promise.all(tasks.map((t) => ctx.db.delete(t._id)))
+    await ctx.db.delete(id)
+  },
+})
+
 export const create = mutation({
   args: {
     name: v.string(),

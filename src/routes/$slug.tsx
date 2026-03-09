@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { convexQuery } from "@convex-dev/react-query"
 import { useMutation } from "convex/react"
@@ -22,8 +22,12 @@ function ProjectPage() {
   )
   const createTask = useMutation(api.tasks.create)
   const removeTask = useMutation(api.tasks.remove)
+  const removeProject = useMutation(api.projects.remove)
+  const navigate = useNavigate()
   const [assignee, setAssignee] = useState<"Max" | "Nate">("Nate")
   const [task, setTask] = useState("")
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   if (!project)
     return <main className="max-w-xl mx-auto p-8">Project not found</main>
@@ -80,6 +84,46 @@ function ProjectPage() {
           </li>
         ))}
       </ul>
+
+      <button
+        onClick={() => setConfirmDelete(true)}
+        className="self-start text-sm text-red-500"
+      >
+        Delete project
+      </button>
+
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center"
+          onClick={() => setConfirmDelete(false)}
+        >
+          <div
+            className="bg-white rounded p-6 flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm">Are you sure?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-sm px-4 py-2 border rounded"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={deleting}
+                onClick={async () => {
+                  setDeleting(true)
+                  await removeProject({ id: project!._id })
+                  navigate({ to: "/" })
+                }}
+                className="text-sm px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
