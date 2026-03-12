@@ -3,7 +3,9 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { convexQuery } from "@convex-dev/react-query"
 import { useMutation } from "convex/react"
 import { api } from "../../convex/_generated/api"
+import type { Id } from "../../convex/_generated/dataModel"
 import { useState } from "react"
+import { Column, type Assignee, type Task } from "../components/TaskBoard"
 
 export const Route = createFileRoute("/$slug")({
   component: ProjectPage,
@@ -21,16 +23,21 @@ function ProjectPage() {
     ),
   )
   const createTask = useMutation(api.tasks.create)
-  const removeTask = useMutation(api.tasks.remove)
-  const removeProject = useMutation(api.projects.remove)
+  const setAssignee = useMutation(api.tasks.setAssignee)
+  const archiveProject = useMutation(api.projects.setArchived)
+  const updateStatus = useMutation(api.projects.updateStatus)
   const navigate = useNavigate()
-  const [assignee, setAssignee] = useState<"Max" | "Nate">("Nate")
+  const [status, setStatus] = useState(project?.status ?? "")
+  const [assignee, setAssigneeInput] = useState<Assignee>("Nate")
   const [task, setTask] = useState("")
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const [confirmArchive, setConfirmArchive] = useState(false)
+  const [archiving, setArchiving] = useState(false)
+  const [draggingId, setDraggingId] = useState<Id<"tasks"> | null>(null)
 
-  if (!project)
-    return <main className="max-w-xl mx-auto p-8">Project not found</main>
+  if (!project) return <main className="p-8">Project not found</main>
+
+  const nateTasks = (tasks ?? []).filter((t) => t.assignee === "Nate") as Task[]
+  const maxTasks = (tasks ?? []).filter((t) => t.assignee === "Max") as Task[]
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -39,21 +46,39 @@ function ProjectPage() {
     setTask("")
   }
 
-  return (
-    <main className="max-w-xl mx-auto p-8 flex flex-col gap-8">
-      <h1 className="text-xl font-semibold">{project.name}</h1>
+  async function handleDrop(targetAssignee: Assignee) {
+    if (!draggingId) return
+    const t = tasks?.find((t) => t._id === draggingId)
+    if (t && t.assignee !== targetAssignee) {
+      await setAssignee({ id: draggingId, assignee: targetAssignee })
+    }
+    setDraggingId(null)
+  }
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+  return (
+    <main className="p-8 flex flex-col gap-8">
+      <div className="flex items-center gap-4 min-w-0">
+        <h1 className="text-xl font-semibold">{project.name}</h1>
+        <input
+          className="flex-1 min-w-0 text-sm bg-transparent outline-none text-gray-400 dark:text-gray-500 placeholder-gray-300 dark:placeholder-gray-600 cursor-text"
+          placeholder="Status"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          onBlur={() => updateStatus({ id: project._id, status })}
+        />
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex gap-3 items-center">
         <select
-          className="border rounded px-3 py-2 text-sm"
+          className="border rounded px-3 py-2 text-sm bg-transparent dark:border-gray-700 dark:bg-gray-900"
           value={assignee}
-          onChange={(e) => setAssignee(e.target.value as "Max" | "Nate")}
+          onChange={(e) => setAssigneeInput(e.target.value as Assignee)}
         >
           <option value="Nate">Nate</option>
           <option value="Max">Max</option>
         </select>
         <input
-          className="border rounded px-3 py-2 text-sm"
+          className="border rounded px-3 py-2 text-sm flex-1 bg-transparent dark:border-gray-700 dark:placeholder-gray-500"
           placeholder="Task"
           value={task}
           onChange={(e) => setTask(e.target.value)}
@@ -61,64 +86,65 @@ function ProjectPage() {
         />
         <button
           type="submit"
-          className="self-start bg-gray-900 text-white text-sm px-4 py-2 rounded"
+          className="bg-gray-900 text-white text-sm px-4 py-2 rounded shrink-0 dark:bg-gray-100 dark:text-gray-900"
         >
           Add task
         </button>
       </form>
 
-      <ul className="flex flex-col gap-2">
-        {tasks?.map((t) => (
-          <li
-            key={t._id}
-            className="flex items-center gap-3 border rounded px-3 py-2 text-sm"
-          >
-            <span className="text-gray-400 shrink-0">{t.assignee}</span>
-            <span className="flex-1">{t.task}</span>
-            <button
-              onClick={() => removeTask({ id: t._id })}
-              className="text-gray-300 hover:text-red-500"
-            >
-              ✕
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className="flex gap-6">
+        <Column
+          label="Nate"
+          assignee="Nate"
+          tasks={nateTasks}
+          draggingId={draggingId}
+          onDragStart={setDraggingId}
+          onDrop={handleDrop}
+        />
+        <Column
+          label="Max"
+          assignee="Max"
+          tasks={maxTasks}
+          draggingId={draggingId}
+          onDragStart={setDraggingId}
+          onDrop={handleDrop}
+        />
+      </div>
 
       <button
-        onClick={() => setConfirmDelete(true)}
-        className="self-start text-sm text-red-500"
+        onClick={() => setConfirmArchive(true)}
+        className="self-start text-sm text-gray-400 dark:text-gray-500"
       >
-        Delete project
+        Archive project
       </button>
 
-      {confirmDelete && (
+      {confirmArchive && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center"
-          onClick={() => setConfirmDelete(false)}
+          onClick={() => setConfirmArchive(false)}
         >
           <div
-            className="bg-white rounded p-6 flex flex-col gap-4"
+            className="bg-white dark:bg-gray-800 rounded p-6 flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-sm">Are you sure?</p>
+            <p className="text-sm">Archive this project?</p>
             <div className="flex gap-2">
               <button
-                onClick={() => setConfirmDelete(false)}
-                className="text-sm px-4 py-2 border rounded"
+                onClick={() => setConfirmArchive(false)}
+                className="text-sm px-4 py-2 border rounded dark:border-gray-600"
               >
                 Cancel
               </button>
               <button
-                disabled={deleting}
+                disabled={archiving}
                 onClick={async () => {
-                  setDeleting(true)
-                  await removeProject({ id: project!._id })
+                  setArchiving(true)
+                  await archiveProject({ id: project!._id, archived: true })
                   navigate({ to: "/" })
                 }}
-                className="text-sm px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50"
+                className="text-sm px-4 py-2 bg-gray-900 text-white rounded disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900"
               >
-                {deleting ? "Deleting..." : "Delete"}
+                {archiving ? "Archiving..." : "Archive"}
               </button>
             </div>
           </div>

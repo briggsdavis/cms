@@ -1,104 +1,54 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { useMutation } from "convex/react"
-import { useSuspenseQuery } from "@tanstack/react-query"
 import { convexQuery } from "@convex-dev/react-query"
-import { api } from "../../convex/_generated/api"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
+import { useMutation } from "convex/react"
 import { useState } from "react"
-import slugify from "@sindresorhus/slugify"
-import { ChevronDown, ChevronRight } from "lucide-react"
+import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
+import { Column, type Assignee, type Task } from "../components/TaskBoard"
 
 export const Route = createFileRoute("/")({
-  component: Home,
+  component: Dashboard,
 })
 
-function ProjectRow({
-  project,
-}: {
-  project: { _id: Id<"projects">; name: string; slug: string }
-}) {
-  const [open, setOpen] = useState(false)
-  const { data: tasks } = useSuspenseQuery(
-    convexQuery(api.tasks.listByProject, { projectId: project._id }),
-  )
+function Dashboard() {
+  const { data: tasks } = useSuspenseQuery(convexQuery(api.tasks.listAll, {}))
+  const setAssignee = useMutation(api.tasks.setAssignee)
+  const [draggingId, setDraggingId] = useState<Id<"tasks"> | null>(null)
 
-  return (
-    <li className="border rounded text-sm">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between w-full px-3 py-2 text-left"
-      >
-        <Link
-          to="/$slug"
-          params={{ slug: project.slug }}
-          className="hover:underline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {project.name}
-        </Link>
-        <span className="text-gray-400">
-          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        </span>
-      </button>
-      {open && tasks.length > 0 && (
-        <ul className="border-t px-3 py-2 flex flex-col gap-1">
-          {tasks.map((t) => (
-            <li key={t._id} className="flex gap-3 text-gray-600">
-              <span className="text-gray-400 shrink-0">{t.assignee}</span>
-              <span>{t.task}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </li>
-  )
-}
+  const nateTasks = tasks.filter((t) => t.assignee === "Nate") as Task[]
+  const maxTasks = tasks.filter((t) => t.assignee === "Max") as Task[]
 
-function Home() {
-  const { data: projects } = useSuspenseQuery(
-    convexQuery(api.projects.list, {}),
-  )
-  const create = useMutation(api.projects.create)
-  const [name, setName] = useState("")
-  const [error, setError] = useState("")
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError("")
-    try {
-      await create({ name, slug: slugify(name) })
-      setName("")
-    } catch (err: any) {
-      setError(err.message)
+  async function handleDrop(targetAssignee: Assignee) {
+    if (!draggingId) return
+    const t = tasks.find((t) => t._id === draggingId)
+    if (t && t.assignee !== targetAssignee) {
+      await setAssignee({ id: draggingId, assignee: targetAssignee })
     }
+    setDraggingId(null)
   }
 
   return (
-    <main className="max-w-xl mx-auto p-8 flex flex-col gap-8">
-      <h1 className="text-xl font-semibold">Projects</h1>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
-          className="border rounded px-3 py-2 text-sm"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
+    <div className="p-8 flex flex-col gap-8">
+      <h1 className="text-xl font-semibold">Dashboard</h1>
+      <div className="flex gap-6">
+        <Column
+          label="Nate"
+          assignee="Nate"
+          tasks={nateTasks}
+          draggingId={draggingId}
+          onDragStart={setDraggingId}
+          onDrop={handleDrop}
         />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button
-          type="submit"
-          className="self-start bg-gray-900 text-white text-sm px-4 py-2 rounded"
-        >
-          Create project
-        </button>
-      </form>
-
-      <ul className="flex flex-col gap-2">
-        {projects.map((p) => (
-          <ProjectRow key={p._id} project={p} />
-        ))}
-      </ul>
-    </main>
+        <Column
+          label="Max"
+          assignee="Max"
+          tasks={maxTasks}
+          draggingId={draggingId}
+          onDragStart={setDraggingId}
+          onDrop={handleDrop}
+        />
+      </div>
+    </div>
   )
 }

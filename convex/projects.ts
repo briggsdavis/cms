@@ -18,15 +18,17 @@ export const list = query({
   },
 })
 
-export const remove = mutation({
-  args: { id: v.id("projects") },
-  handler: async (ctx, { id }) => {
-    const tasks = await ctx.db
-      .query("tasks")
-      .withIndex("by_project", (q) => q.eq("projectId", id))
-      .collect()
-    await Promise.all(tasks.map((t) => ctx.db.delete(t._id)))
-    await ctx.db.delete(id)
+export const setArchived = mutation({
+  args: { id: v.id("projects"), archived: v.boolean() },
+  handler: async (ctx, { id, archived }) => {
+    await ctx.db.patch(id, { archived })
+  },
+})
+
+export const updateStatus = mutation({
+  args: { id: v.id("projects"), status: v.string() },
+  handler: async (ctx, { id, status }) => {
+    await ctx.db.patch(id, { status })
   },
 })
 
@@ -41,6 +43,6 @@ export const create = mutation({
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first()
     if (existing) throw new Error(`Slug "${slug}" is already taken`)
-    return ctx.db.insert("projects", { name, slug })
+    return ctx.db.insert("projects", { name, slug, archived: false })
   },
 })
