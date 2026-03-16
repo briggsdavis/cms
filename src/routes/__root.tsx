@@ -15,6 +15,7 @@ import { useEffect, useState, Suspense } from "react"
 import { Sun, Moon, ChevronDown, ChevronUp } from "lucide-react"
 import { api } from "../../convex/_generated/api"
 import appCss from "~/styles/app.css?url"
+import { PROJECT_COLORS } from "~/lib/projectColors"
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
@@ -61,6 +62,17 @@ function ThemeToggle() {
   )
 }
 
+
+function ColorDot({ color, size = 10 }: { color?: string; size?: number }) {
+  if (!color) return null
+  return (
+    <span
+      className="inline-block rounded-full shrink-0 border border-gray-300 dark:border-gray-600"
+      style={{ width: size, height: size, backgroundColor: color }}
+    />
+  )
+}
+
 function Sidebar() {
   const { data: projects } = useSuspenseQuery(
     convexQuery(api.projects.list, {}),
@@ -69,6 +81,9 @@ function Sidebar() {
   const navigate = useNavigate()
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState("")
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(
+    undefined,
+  )
 
   const active = projects.filter((p) => !p.archived)
   const archived = projects.filter((p) => p.archived)
@@ -78,8 +93,9 @@ function Sidebar() {
     e.preventDefault()
     if (!name.trim()) return
     const slug = slugify(name.trim())
-    await create({ name: name.trim(), slug })
+    await create({ name: name.trim(), slug, color: selectedColor })
     setName("")
+    setSelectedColor(undefined)
     setAdding(false)
     navigate({ to: "/$slug", params: { slug } })
   }
@@ -104,12 +120,13 @@ function Sidebar() {
               key={p._id}
               to="/$slug"
               params={{ slug: p.slug }}
-              className="text-sm px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 truncate"
+              className="text-sm px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 truncate flex items-center gap-2"
               activeProps={{
                 className:
                   "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100",
               }}
             >
+              <ColorDot color={p.color} size={8} />
               {p.name}
             </Link>
           ))}
@@ -117,20 +134,47 @@ function Sidebar() {
 
         <div className="mt-1">
           {adding ? (
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleCreate} className="flex flex-col gap-1.5">
               <input
                 autoFocus
                 className="w-full text-sm px-2 py-1.5 border rounded bg-transparent dark:border-gray-700 dark:placeholder-gray-500 outline-none"
                 placeholder="Project name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                onBlur={() => {
-                  if (!name.trim()) setAdding(false)
-                }}
                 onKeyDown={(e) => {
-                  if (e.key === "Escape") setAdding(false)
+                  if (e.key === "Escape") {
+                    setAdding(false)
+                    setName("")
+                    setSelectedColor(undefined)
+                  }
                 }}
               />
+              <div className="flex flex-wrap gap-1 px-1">
+                {PROJECT_COLORS.map((c) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    title={c.name}
+                    onClick={() =>
+                      setSelectedColor(
+                        selectedColor === c.hex ? undefined : c.hex,
+                      )
+                    }
+                    className="w-4 h-4 rounded-full border-2 transition-transform hover:scale-110"
+                    style={{
+                      backgroundColor: c.hex,
+                      borderColor:
+                        selectedColor === c.hex ? "#6b7280" : "transparent",
+                    }}
+                  />
+                ))}
+              </div>
+              <button
+                type="submit"
+                className="text-xs px-2 py-1 bg-gray-900 text-white rounded dark:bg-gray-100 dark:text-gray-900 self-start ml-1"
+              >
+                Create
+              </button>
             </form>
           ) : (
             <button
@@ -165,12 +209,13 @@ function Sidebar() {
                   key={p._id}
                   to="/$slug"
                   params={{ slug: p.slug }}
-                  className="text-xs px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 truncate"
+                  className="text-xs px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 truncate flex items-center gap-2"
                   activeProps={{
                     className:
                       "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400",
                   }}
                 >
+                  <ColorDot color={p.color} size={7} />
                   {p.name}
                 </Link>
               ))}

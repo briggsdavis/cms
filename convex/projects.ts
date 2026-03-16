@@ -36,13 +36,21 @@ export const create = mutation({
   args: {
     name: v.string(),
     slug: v.string(),
+    color: v.optional(v.string()),
   },
-  handler: async (ctx, { name, slug }) => {
+  handler: async (ctx, { name, slug, color }) => {
     const existing = await ctx.db
       .query("projects")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .first()
     if (existing) throw new Error(`Slug "${slug}" is already taken`)
-    return ctx.db.insert("projects", { name, slug, archived: false })
+    return ctx.db.insert("projects", { name, slug, archived: false, color })
+  },
+})
+
+export const setColor = mutation({
+  args: { id: v.id("projects"), color: v.string() },
+  handler: async (ctx, { id, color }) => {
+    await ctx.db.patch(id, { color })
   },
 })

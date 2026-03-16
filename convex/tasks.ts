@@ -9,7 +9,7 @@ export const listAll = query({
       tasks.map(async (t) => {
         const project = await ctx.db.get(t.projectId)
         if (!project || project.archived || t.completed) return null
-        return { ...t, projectName: project.name, projectSlug: project.slug }
+        return { ...t, projectName: project.name, projectSlug: project.slug, projectColor: project.color }
       }),
     )
     return enriched.filter((t) => t !== null)
