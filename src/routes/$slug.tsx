@@ -6,7 +6,6 @@ import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { useState } from "react"
 import { Column, type Assignee, type Task } from "../components/TaskBoard"
-import { PROJECT_COLORS } from "~/lib/projectColors"
 
 export const Route = createFileRoute("/$slug")({
   component: ProjectPage,
@@ -27,7 +26,6 @@ function ProjectPage() {
   const setAssignee = useMutation(api.tasks.setAssignee)
   const archiveProject = useMutation(api.projects.setArchived)
   const updateStatus = useMutation(api.projects.updateStatus)
-  const setColor = useMutation(api.projects.setColor)
   const navigate = useNavigate()
   const [status, setStatus] = useState(project?.status ?? "")
   const [assignee, setAssigneeInput] = useState<Assignee>("Nate")
@@ -74,26 +72,6 @@ function ProjectPage() {
           onChange={(e) => setStatus(e.target.value)}
           onBlur={() => updateStatus({ id: project._id, status })}
         />
-      </div>
-      <div className="flex gap-1.5 flex-wrap">
-        {PROJECT_COLORS.map((c) => (
-          <button
-            key={c.name}
-            title={c.name}
-            onClick={() =>
-              setColor({
-                id: project._id,
-                color: project.color === c.hex ? "" : c.hex,
-              })
-            }
-            className="w-5 h-5 rounded-full border-2 transition-transform hover:scale-110"
-            style={{
-              backgroundColor: c.hex,
-              borderColor:
-                project.color === c.hex ? "#6b7280" : "transparent",
-            }}
-          />
-        ))}
       </div>
 
       <form onSubmit={handleSubmit} className="flex gap-3 items-center">
