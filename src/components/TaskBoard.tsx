@@ -14,6 +14,7 @@ export type Task = {
   completed?: boolean
   projectName?: string
   projectSlug?: string
+  projectColor?: string
 }
 
 export function TaskCard({
@@ -78,8 +79,14 @@ export function TaskCard({
           <Link
             to="/$slug"
             params={{ slug: t.projectSlug }}
-            className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex items-center gap-1"
           >
+            {t.projectColor && (
+              <span
+                className="inline-block w-2 h-2 rounded-full shrink-0 border border-gray-200 dark:border-gray-600"
+                style={{ backgroundColor: t.projectColor }}
+              />
+            )}
             {t.projectName}
           </Link>
         )}

@@ -6,6 +6,7 @@ import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { useState } from "react"
 import { Column, type Assignee, type Task } from "../components/TaskBoard"
+import { PROJECT_COLORS } from "~/lib/projectColors"
 
 export const Route = createFileRoute("/$slug")({
   component: ProjectPage,
@@ -26,6 +27,7 @@ function ProjectPage() {
   const setAssignee = useMutation(api.tasks.setAssignee)
   const archiveProject = useMutation(api.projects.setArchived)
   const updateStatus = useMutation(api.projects.updateStatus)
+  const setColor = useMutation(api.projects.setColor)
   const navigate = useNavigate()
   const [status, setStatus] = useState(project?.status ?? "")
   const [assignee, setAssigneeInput] = useState<Assignee>("Nate")
@@ -58,6 +60,20 @@ function ProjectPage() {
   return (
     <main className="p-8 flex flex-col gap-8">
       <div className="flex items-center gap-4 min-w-0">
+        <div className="flex gap-1.5">
+          {PROJECT_COLORS.map((c) => (
+            <button
+              key={c.name}
+              title={c.name}
+              onClick={() => setColor({ id: project._id, color: c.hex })}
+              className="w-4 h-4 rounded-full border-2 transition-transform hover:scale-110 shrink-0"
+              style={{
+                backgroundColor: c.hex,
+                borderColor: project.color === c.hex ? "#6b7280" : "transparent",
+              }}
+            />
+          ))}
+        </div>
         <h1 className="text-xl font-semibold">{project.name}</h1>
         <input
           className="flex-1 min-w-0 text-sm bg-transparent outline-none text-gray-400 dark:text-gray-500 placeholder-gray-300 dark:placeholder-gray-600 cursor-text"
